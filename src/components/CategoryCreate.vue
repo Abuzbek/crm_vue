@@ -1,9 +1,8 @@
 <template>
   <div>
     <div class="page-subtitle">
-      <h4>Создать</h4>
+      <h4>{{'Create' | localize}}</h4>
     </div>
-
     <form @submit.prevent="submitHandler">
       <div class="input-field">
         <input
@@ -12,11 +11,11 @@
           v-model.trim="title"
           :class="{ invalid: $v.title.$dirty && !$v.title.required }"
         />
-        <label for="name">Название</label>
+        <label for="name">{{'Message_CategoryTitle' | localize}}</label>
         <span
           class="helper-text invalid"
           v-if="$v.title.$dirty && !$v.title.required"
-          >Введите название</span
+          >{{'Title' | localize}}</span
         >
       </div>
 
@@ -27,22 +26,23 @@
           v-model.number="limit"
           :class="{ invalid: $v.limit.$dirty && !$v.limit.minValue }"
         />
-        <label for="limit">Лимит</label>
+        <label for="limit">{{'Limit' | localize}}</label>
         <span
           v-if="$v.limit.$dirty && !$v.limit.minValue"
           class="helper-text invalid"
-          >Минимальная величина</span
+          >{{'Message_MinLength' | localize}}</span
         >
       </div>
 
       <button class="btn waves-effect waves-light" type="submit">
-        Создать
+        {{'Create' | localize}}
         <i class="material-icons right">send</i>
       </button>
     </form>
   </div>
 </template>
 <script>
+import localize from '../filters/localize.filter'
 import { required, minValue } from "vuelidate/lib/validators";
 export default {
   data: () => ({
@@ -62,18 +62,17 @@ export default {
         this.$v.$touch();
         return;
       }
-      console.log(this.limit, this.title);
       const categoryData = {
         title: this.title,
         limit: this.limit
       };
       try {
         const category = await this.$store.dispatch("createCategory", categoryData);
-        console.log(category);
         this.title = ''
         this.limit = 100
         this.$v.$reset()
-        this.$message(`muaffaqwiyatli qo'shildi`)
+        this.$message(`${localize('Category_HasBeenCreated')}`)
+        this.$emit('created', category)
       } catch (error) {
         console.log(error);
       }

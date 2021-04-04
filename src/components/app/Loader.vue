@@ -17,9 +17,6 @@
 </template>
 <script>
 export default {
-  mounted() {
-    console.log(this.color);
-  },
   computed: {
     color() {
       const colors = [

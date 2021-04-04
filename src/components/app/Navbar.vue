@@ -55,11 +55,9 @@ export default {
     this.interval = setInterval(()=>{
       this.date = new Date
     },1000)
-    console.log(this.$refs.dropdown);
     this.dropdown = M.Dropdown.init(this.$refs.dropdown, {
       constrainWidth:false
     })
-    // console.log(this.$store.getters.info.name);
   },
   computed:{
     name(){
@@ -67,7 +65,6 @@ export default {
     }
   },
   beforeDestroy(){
-    console.log('before');
     clearInterval(this.interval)
     if (this.dropdown && this.dropdown.destroy) {
       this.dropdown.destroy()

@@ -1,43 +1,98 @@
 <template>
   <div>
     <div class="page-title">
-      <h3>История записей</h3>
+      <h3>{{'History_Title' | localize}}</h3>
     </div>
-
     <div class="history-chart">
-      <canvas></canvas>
+      <canvas ref="canvas"></canvas>
     </div>
-
-    <section>
-      <table>
-        <thead>
-          <tr>
-            <th>#</th>
-            <th>Сумма</th>
-            <th>Дата</th>
-            <th>Категория</th>
-            <th>Тип</th>
-            <th>Открыть</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr>
-            <td>1</td>
-            <td>1212</td>
-            <td>12.12.32</td>
-            <td>name</td>
-            <td>
-              <span class="white-text badge red">Расход</span>
-            </td>
-            <td>
-              <button class="btn-small btn">
-                <i class="material-icons">open_in_new</i>
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <Loader v-if="loading" />
+    <p class="center" v-else-if="!records.length">
+      {{'NoRecords' | localize}}
+      <router-link to="/categories">{{'AddFirst' | localize}} </router-link>
+    </p>
+    <section v-else>
+      <HistoryTable :records="items" />
+      <Paginate
+        :page-count="pageCount"
+        :click-handler="pageChangeHandler"
+        :prev-text="'Back' | localize"
+        :next-text="'Forward' | localize"
+        :container-class="'pagination'"
+        :page-class="'waves-effect'"
+      />
     </section>
   </div>
 </template>
+<script>
+import paginationMixin from "@/mixins/pagination.mixin";
+import HistoryTable from "@/components/HistoryTable";
+import { Pie } from "vue-chartjs";
+// import currency from '../filters/currency.filter'
+import localizeFilter from '../filters/localize.filter';
+export default {
+  name: "history",
+  extends: Pie,
+  mixins: [paginationMixin],
+  data: () => ({
+    loading: true,
+    records: []
+  }),
+  components: { HistoryTable },
+  async mounted() {
+    this.records = await this.$store.dispatch("fetchRecords");
+    const categories = await this.$store.dispatch("fetchCategories");
+    this.setup(categories);
+    this.loading = false;
+  },
+  methods: {
+    setup(categories) {
+      this.setUpPaginetion(
+        this.records.map(rec => {
+          return {
+            ...rec,
+            categoryName: categories.find(c => c.id === rec.categoryId).title,
+            typeClass: rec.type === "income" ? "green" : "red",
+            typeTitle: rec.type === 'income'
+                ? localizeFilter('Income')
+                : localizeFilter('Outcome')
+          };
+        }).reverse()
+      );
+      this.renderChart({
+        labels: categories.map(c=>c.title),
+        datasets: [
+          {
+            label: localizeFilter('CostsForCategories'),
+            data: categories.map(c=>{
+              return this.records.reduce((total,r)=>{
+                if (r.categoryId === c.id && r.type === 'outcome') {
+                  total+=r.amount
+                }
+                return total
+              },0)
+            }),
+            backgroundColor: [
+              'rgba(255, 99, 132, 0.2)',
+              'rgba(54, 162, 235, 0.2)',
+              'rgba(255, 206, 86, 0.2)',
+              'rgba(75, 192, 192, 0.2)',
+              'rgba(153, 102, 255, 0.2)',
+              'rgba(255, 159, 64, 0.2)'
+            ],
+            borderColor: [
+              'rgba(255, 99, 132, 1)',
+              'rgba(54, 162, 235, 1)',
+              'rgba(255, 206, 86, 1)',
+              'rgba(75, 192, 192, 1)',
+              'rgba(153, 102, 255, 1)',
+              'rgba(255, 159, 64, 1)'
+              ],
+            borderWidth: 1
+          }
+        ]
+      });
+    }
+  }
+};
+</script>
